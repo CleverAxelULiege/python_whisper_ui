@@ -1,0 +1,70 @@
+import time
+import tkinter as tk
+from pathlib import Path
+import re
+WHISPER_LANGUAGES = {
+    "Automatique": "unkown",
+    "Anglais": "en",
+    "Chinois": "zh",
+    "Allemand": "de",
+    "Espagnol": "es",
+    "Russe": "ru",
+    "Coréen": "ko",
+    "Français": "fr",
+    "Japonais": "ja",
+    "Portugais": "pt",
+    "Turc": "tr",
+    "Polonais": "pl",
+    "Néerlandais": "nl",
+    "Suédois": "sv",
+    "Italien": "it",
+    "Indonésien": "id",
+    "Hindi": "hi",
+    "Finnois": "fi",
+    "Vietnamien": "vi",
+    "Ukrainien": "uk",
+    "Grec": "el",
+    "Tchèque": "cs",
+    "Roumain": "ro",
+    "Danois": "da",
+    "Hongrois": "hu",
+    "Norvégien": "no"
+}
+
+
+class WhisperUIInput:
+    def __init__(self, root):
+        self.allowed_extensions = [".txt", ".json"]
+        self.save_directory_path = tk.StringVar(master=root, value=Path.home())
+        self.save_file_extension = tk.StringVar(master=root, value=self.allowed_extensions[0])
+        self.save_filename = tk.StringVar(master=root, value=str(int(time.time())))
+        self.save_transcript_file_full_path = tk.StringVar(master=root)
+        self.audio_file_path = tk.StringVar(master=root)
+        self.language = tk.StringVar(master=root)
+        self.normalize_save_full_path()
+        self.__init_event_listeners()
+
+    def normalize_save_full_path(self, *args):
+        self.save_filename.set(self.__sanitize_filename())
+
+        pathObject = Path(
+            self.save_directory_path.get() + 
+            "/" + 
+            self.save_filename.get() + 
+            self.save_file_extension.get()
+        )
+
+        self.save_transcript_file_full_path.set(pathObject.resolve())
+    
+    def __init_event_listeners(self):
+        self.save_filename.trace_add("write", self.normalize_save_full_path)
+        self.save_file_extension.trace_add("write", self.normalize_save_full_path)
+        self.save_directory_path.trace_add("write", self.normalize_save_full_path)
+
+    def __sanitize_filename(self):
+        filename = self.save_filename.get().replace(" ", "_")
+        filename = re.sub(r'[\\/:*?"<>|]', '', filename)
+        filename = re.sub(r'[\0]', '', filename)
+        
+        #substr
+        return filename[:255]
