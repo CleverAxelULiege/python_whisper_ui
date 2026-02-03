@@ -19,9 +19,7 @@ WHISPER_LANGUAGES = {
     "Suédois": "sv",
     "Italien": "it",
     "Indonésien": "id",
-    "Hindi": "hi",
     "Finnois": "fi",
-    "Vietnamien": "vi",
     "Ukrainien": "uk",
     "Grec": "el",
     "Tchèque": "cs",
@@ -34,7 +32,7 @@ WHISPER_LANGUAGES = {
 
 class WhisperUIInput:
     def __init__(self, root):
-        self.allowed_extensions = [".txt", ".json"]
+        self.allowed_extensions = [".txt"]
         self.save_directory_path = tk.StringVar(master=root, value=Path.home())
         self.save_file_extension = tk.StringVar(master=root, value=self.allowed_extensions[0])
         self.save_filename = tk.StringVar(master=root, value=str(int(time.time())))

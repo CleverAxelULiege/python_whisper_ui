@@ -17,12 +17,18 @@ class WhisperUI:
         self.root = Tk()
         self.input = WhisperUIInput(self.root)
 
+        self.progress_bar = ttk.Progressbar(master=self.root, mode="indeterminate")
+        self.submit_button = Button()
+
         self.__init_root()
         self.__create_title()
         self.__file_name_and_location()
         self.__build_audio_selection()
         self.__build_language_selection()
         self.__submit_button()
+        self.__place_progress_bar()
+        self.__hide_progress_bar()
+        self.__enable_submit_button()
     
     def __create_title(self):
         title = Label(self.root, text="~ WHISPER UI ᕕ( ᐛ )ᕗ", font=("Consolas", 22, "bold"))
@@ -39,6 +45,13 @@ class WhisperUI:
             bg="black"
         )
         separator_title.pack(fill="x", padx=10)
+
+    def __disable_submit_button(self):
+        self.submit_button["state"] = "disabled"
+
+
+    def __enable_submit_button(self):
+        self.submit_button["state"] = "enable"
 
     def __file_name_and_location(self):
         label_frame = LabelFrame(self.root, text=" • Nom et emplacement • ", font=("Arial", 12, "bold"))
@@ -85,6 +98,15 @@ class WhisperUI:
         label = Label(label_frame, textvariable=self.input.save_transcript_file_full_path, font=("Arial", 8, "italic"), fg="red")
         label.pack(side="top", anchor="nw", expand=False, padx=2, pady=(0, 0))
 
+    def __place_progress_bar(self):
+        self.progress_bar = ttk.Progressbar(self.root, mode="indeterminate", length=300)
+        self.__show_progress_bar()
+
+    def __hide_progress_bar(self):
+        self.progress_bar.pack_forget()
+
+    def __show_progress_bar(self):
+        self.progress_bar.pack()
 
     def __select_save_directory(self):
         path = filedialog.askdirectory()
@@ -142,8 +164,8 @@ class WhisperUI:
     def __submit_button(self):
         button_frame = Frame(self.root)
         button_frame.pack(anchor="nw", fill="x", padx=5, pady=5)
-        submit_button = ttk.Button(button_frame, text="Transcrire le fichier audio", command=self.__on_submit_button)
-        submit_button.pack(side="left", padx=5, pady=5, expand=True)
+        self.submit_button = ttk.Button(button_frame, text="Transcrire le fichier audio", command=self.__on_submit_button)
+        self.submit_button.pack(side="left", padx=5, pady=5, expand=True)
 
     def __on_submit_button(self):
         audio_path = Path(self.input.audio_file_path.get())
@@ -162,6 +184,9 @@ class WhisperUI:
             messagebox.showerror(title="Le dossier n'existe pas", message="Le dossier où doit être enregistré la transcription n'existe pas.")
             return
 
+        self.__disable_submit_button()
+        self.__show_progress_bar()
+        self.progress_bar.start()
         # self.__transcribe()
         
     def __transcribe(self):
@@ -225,7 +250,7 @@ class WhisperUI:
 
     def __init_root(self):
         self.root.title("Whisper UI")
-        self.root.geometry("640x480")
+        self.root.geometry("640x580")
         self.root.resizable(False, False)
 
     def start(self):
