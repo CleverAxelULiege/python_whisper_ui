@@ -6,8 +6,8 @@ import threading
 
 class WhisperUIService:
     def __init__(self):
-        self.__model_id = r"C:\Users\clever\Documents\python\tkinter_whisper\model\small"
-        self.audio_path = r"C:\Users\clever\Documents\python\tkinter_whisper\small_audio.mp3"
+        self.model_id = r"C:\Users\clever\Documents\python\tkinter_whisper\model\small"
+        self.audio_path = r"C:\Users\clever\Documents\python\tkinter_whisper\out_.mp3"
 
     def transcribe(self, on_finish):
         t = threading.Thread(target=self.__thread, daemon=True, args=(on_finish,))
@@ -22,14 +22,14 @@ class WhisperUIService:
             audio_file = r"C:\Users\clever\Documents\python\tkinter_whisper\audio.mp3"
 
             model = AutoModelForSpeechSeq2Seq.from_pretrained(
-                model_id,
+                self.model_id,
                 torch_dtype=torch_dtype,
                 low_cpu_mem_usage=True,
                 use_safetensors=True
             )
             model.to(device)
 
-            processor = AutoProcessor.from_pretrained(model_id)
+            processor = AutoProcessor.from_pretrained(self.model_id)
 
             pipe = pipeline(
                 "automatic-speech-recognition",
@@ -43,9 +43,9 @@ class WhisperUIService:
                 generate_kwargs={"language": "fr"}
             )
 
-            audio, sample_rate = librosa.load(audio_file, sr=16000, mono=True)
+            audio, sample_rate = librosa.load(self.audio_path, sr=16000, mono=True)
 
-            result = pipe(audio)
+            result = pipe(audio, chunk_length_s = 10)
 
             on_finish(result)
 
