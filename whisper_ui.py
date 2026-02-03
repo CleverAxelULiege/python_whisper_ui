@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog, messagebox
 import traceback
 from whisper_ui_input import WhisperUIInput, WHISPER_LANGUAGES
+from whisper_ui_service import WhisperUIService
 from pathlib import Path
 
 import torch
@@ -16,6 +17,7 @@ class WhisperUI:
     def __init__(self):
         self.root = Tk()
         self.input = WhisperUIInput(self.root)
+        self.service = WhisperUIService()
 
         self.progress_bar = ttk.Progressbar(master=self.root, mode="indeterminate")
         self.submit_button = Button()
@@ -187,7 +189,13 @@ class WhisperUI:
         self.__disable_submit_button()
         self.__show_progress_bar()
         self.progress_bar.start()
+
+        self.service.transcribe(self.__transcribe_on_finish)
+
         # self.__transcribe()
+
+    def __transcribe_on_finish(self, result):
+        print(result)
         
     def __transcribe(self):
         try:
@@ -220,10 +228,8 @@ class WhisperUI:
                 generate_kwargs={"language": "fr"}
             )
 
-            # Load audio
             audio, sample_rate = librosa.load(audio_file, sr=16000, mono=True)
 
-            # Transcribe
             result = pipe(audio)
 
             messagebox.showinfo("Transcription", result["text"][:300])
@@ -241,7 +247,6 @@ class WhisperUI:
             )
 
         except Exception as e:
-            # Catch-all for anything else
             messagebox.showerror(
                 "Unexpected error",
                 f"{e}\n\n{traceback.format_exc()}"
