@@ -2,12 +2,23 @@ import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import librosa
 import threading
+import json
 
 
 class WhisperUIService:
     def __init__(self):
-        self.model_id = r"C:\Users\clever\Documents\python\tkinter_whisper\model\small"
-        self.audio_path = r"C:\Users\clever\Documents\python\tkinter_whisper\small_audio.mp3"
+        self.model_id = ""
+        self.audio_path = ""
+
+    def load_config(self, config_file_path):
+        with open(config_file_path, "r") as f:
+            models = json.load(f)
+
+        for model in models:
+            if model.get("default") is True:
+                self.model_id = model.get("model_path")
+                return
+            
 
     def transcribe(self, on_finish):
         t = threading.Thread(target=self.__thread, daemon=True, args=(on_finish,))

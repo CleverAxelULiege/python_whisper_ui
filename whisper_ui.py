@@ -1,14 +1,42 @@
+from pathlib import Path
+import json
+
+home_dir = Path.home()
+config_path = (home_dir / "whisper_ui_config.json").resolve()
+
+def ensure_json_file():
+    # Get home directory
+    
+
+    # Check if file exists
+    if (not config_path.exists()):
+        template = [
+            {"model_path": "", "default": True},
+            {"model_path": "", "default": False}
+        ]
+        with open(config_path, "w") as f:
+            json.dump(template, f, indent=4)
+        print(f"Fichier de configuration de Whisper UI créé : {config_path}")
+        print("Configurez le avec le modèle de votre choix.")
+    else :
+        print(f"Fichier de configuration de Whisper UI existant : {config_path}")
+        
+
+ensure_json_file()
+print("Chargement des ressources...")
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, messagebox
-import traceback
+print("Tkinter chargé")
 from whisper_ui_input import WhisperUIInput, WHISPER_LANGUAGES
+print("Chargement du modèle d'IA (ceci peut prendre du temps)")
 from whisper_ui_service import WhisperUIService
-from pathlib import Path
+print("Input & service IA local chargé")
 
-import torch
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-import librosa
+
+
+
+
 
 
 # pyinstaller --name WhisperUITestConsole --onedir  whisper_ui.py
@@ -18,6 +46,7 @@ class WhisperUI:
         self.root = Tk()
         self.input = WhisperUIInput(self.root)
         self.service = WhisperUIService()
+        self.service.load_config(config_path)
 
         self.progress_bar = ttk.Progressbar(master=self.root, mode="indeterminate")
         self.submit_button = Button()
@@ -189,70 +218,14 @@ class WhisperUI:
         self.__disable_submit_button()
         self.__show_progress_bar()
         self.progress_bar.start()
+        self.service.audio_path = self.input.audio_file_path.get()
 
         self.service.transcribe(self.__transcribe_on_finish)
 
-        # self.__transcribe()
 
     def __transcribe_on_finish(self, result):
         print(result)
         
-    def __transcribe(self):
-        try:
-            device = "cuda:0" if torch.cuda.is_available() else "cpu"
-            torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-            model_id = r"C:\Users\clever\Documents\python\tkinter_whisper\model\small"
-            audio_file = r"C:\Users\clever\Documents\python\tkinter_whisper\audio.mp3"
-
-            # Load model
-            model = AutoModelForSpeechSeq2Seq.from_pretrained(
-                model_id,
-                torch_dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-                use_safetensors=True
-            )
-            model.to(device)
-
-            processor = AutoProcessor.from_pretrained(model_id)
-
-            pipe = pipeline(
-                "automatic-speech-recognition",
-                model=model,
-                tokenizer=processor.tokenizer,
-                feature_extractor=processor.feature_extractor,
-                batch_size=16,
-                return_timestamps=True,
-                dtype=torch_dtype,
-                device=device,
-                generate_kwargs={"language": "fr"}
-            )
-
-            audio, sample_rate = librosa.load(audio_file, sr=16000, mono=True)
-
-            result = pipe(audio)
-
-            messagebox.showinfo("Transcription", result["text"][:300])
-
-        except FileNotFoundError as e:
-            messagebox.showerror(
-                "File error",
-                f"File not found:\n{e}"
-            )
-
-        except RuntimeError as e:
-            messagebox.showerror(
-                "Runtime error",
-                f"A runtime error occurred (CUDA / model issue?):\n{e}"
-            )
-
-        except Exception as e:
-            messagebox.showerror(
-                "Unexpected error",
-                f"{e}\n\n{traceback.format_exc()}"
-            )
-
-
     def __init_root(self):
         self.root.title("Whisper UI")
         self.root.geometry("640x580")
