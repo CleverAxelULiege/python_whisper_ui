@@ -7,7 +7,7 @@ import threading
 class WhisperUIService:
     def __init__(self):
         self.model_id = r"C:\Users\clever\Documents\python\tkinter_whisper\model\small"
-        self.audio_path = r"C:\Users\clever\Documents\python\tkinter_whisper\out_.mp3"
+        self.audio_path = r"C:\Users\clever\Documents\python\tkinter_whisper\small_audio.mp3"
 
     def transcribe(self, on_finish):
         t = threading.Thread(target=self.__thread, daemon=True, args=(on_finish,))
