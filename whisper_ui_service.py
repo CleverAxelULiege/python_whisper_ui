@@ -33,7 +33,7 @@ class WhisperUIService:
         i = torch.argmax(t[:, 1])
         p = t[i].detach().cpu()
         self.progress_bar_status["percentage_done"] = (int(p[0]) / int(p[1])) * 100
-        self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=123)
+        self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=0)
         # print(int(p[1]))
         # print(int(p[0]))
 
@@ -47,37 +47,25 @@ class WhisperUIService:
             model.to(device, torch_dtype)
 
             audio, sample_rate = librosa.load(self.audio_path, sr=16000, mono=True)
-            inputs = processor(audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000).input_features
+            inputs = processor(audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000)
 
             generated_ids = model.generate(
-                inputs, 
+                inputs.input_features,
+                attention_mask=inputs.attention_mask,
                 return_timestamps=True,
                 task="transcribe", 
                 language="fr",
                 monitor_progress=self.__progress_callback
             )
+
+            pid = generated_ids[0]
+            pdict = processor.tokenizer.decode(pid, output_offsets=True)
+
+            on_finish(pdict)
             
-            for pidi, pid in enumerate(generated_ids):
-                pdict = processor.tokenizer.decode(pid, output_offsets=True)
-                # print(f"Predicted id [{pidi}]: {pdict['text']}")
-                print(f"Predicted id [{pidi}]: {pdict['offsets']}")
-
-            self.progress_bar_status["percentage_done"] = 100
-            self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=123)
-            
-            # transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)
-            # # result = pipe(audio, chunk_length_s = 10)
-
-            # on_finish(transcription)
-
-        except FileNotFoundError as e:
-            print("file not found")
-
-        except RuntimeError as e:
-            print("run time error")
-            print(e)
 
         except Exception as e:
             print("unhandeld exception")
             print(e)
+            self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=1)
             

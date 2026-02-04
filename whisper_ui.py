@@ -222,13 +222,11 @@ class WhisperUI:
 
         self.__disable_submit_button()
         self.__show_progress_bar()
-        # self.progress_bar.start()
         self.service.audio_path = self.input.audio_file_path.get()
-
         self.service.transcribe(self.__transcribe_on_finish)
 
-
     def __transcribe_on_finish(self, result):
+        self.input.progress.set(100)
         print(result)
         
     def __init_root(self):
