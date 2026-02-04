@@ -54,7 +54,7 @@ class WhisperUIService:
                 attention_mask=inputs.attention_mask,
                 return_timestamps=True,
                 task="transcribe", 
-                language="fr",
+                language="en",
                 monitor_progress=self.__progress_callback
             )
 

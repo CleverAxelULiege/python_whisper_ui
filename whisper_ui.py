@@ -227,7 +227,7 @@ class WhisperUI:
 
     def __transcribe_on_finish(self, result):
         self.input.progress.set(100)
-        print(result)
+        print(result["text"])
         
     def __init_root(self):
         self.root.title("Whisper UI")
