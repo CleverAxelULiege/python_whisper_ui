@@ -34,11 +34,6 @@ from whisper_ui_service import WhisperUIService
 print("Input & service IA local chargé")
 
 
-
-
-
-
-
 # pyinstaller --name WhisperUITestConsole --onedir  whisper_ui.py
 # pyinstaller --name WhisperUITestConsole --onedir --windowed  whisper_ui.py
 class WhisperUI:
