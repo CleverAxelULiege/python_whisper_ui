@@ -3,7 +3,10 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, Whi
 import librosa
 import threading
 import json
-
+#https://github.com/huggingface/transformers/issues/30815#issuecomment-2254296338
+#https://github.com/huggingface/transformers/issues/20057
+#https://huggingface.co/docs/transformers/model_doc/whisper#transformers.WhisperForConditionalGeneration.generate
+#https://github.com/m-bain/whisperX
 
 class WhisperUIService:
     def __init__(self):
@@ -66,7 +69,7 @@ class WhisperUIService:
                 # timestamps = processor.tokenizer.decode(pid, decode_with_timestamps=True)
                 timestamps = processor.tokenizer.decode(pid, output_offset=True)
                 pdict = processor.tokenizer.decode(pid, output_offsets=True)
-                print(f"Predicted id [{pidi}]: {pdict['text']}")
+                # print(f"Predicted id [{pidi}]: {pdict['text']}")
                 print(f"Predicted id [{pidi}]: {pdict['offsets']}")
             
             # transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)
