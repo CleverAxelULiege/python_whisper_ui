@@ -38,13 +38,18 @@ print("Input & service IA local chargé")
 # pyinstaller --name WhisperUITestConsole --onedir --windowed  whisper_ui.py
 class WhisperUI:
     def __init__(self):
+        self.progress_bar_status = {
+            "percentage_done" : 10
+        }
         self.root = Tk()
         self.input = WhisperUIInput(self.root)
-        self.service = WhisperUIService()
+        self.service = WhisperUIService(root=self.root, progress_bar_status=self.progress_bar_status)
         self.service.load_config(config_path)
 
-        self.progress_bar = ttk.Progressbar(master=self.root, mode="indeterminate")
+        self.progress_bar = ttk.Progressbar(master=self.root, mode="determinate")
         self.submit_button = Button()
+
+        self.root.bind("<<update_progress_bar_event>>", self.__update_progress_bar)
 
         self.__init_root()
         self.__create_title()
@@ -55,6 +60,11 @@ class WhisperUI:
         self.__place_progress_bar()
         self.__hide_progress_bar()
         self.__enable_submit_button()
+
+    def __update_progress_bar(self, evt):
+        print(self.progress_bar_status["percentage_done"])
+        self.input.progress.set(self.progress_bar_status["percentage_done"])
+        # self.progress_bar.set(self.progress_bar_status["percentage_done"])
     
     def __create_title(self):
         title = Label(self.root, text="~ WHISPER UI ᕕ( ᐛ )ᕗ", font=("Consolas", 22, "bold"))
@@ -125,7 +135,7 @@ class WhisperUI:
         label.pack(side="top", anchor="nw", expand=False, padx=2, pady=(0, 0))
 
     def __place_progress_bar(self):
-        self.progress_bar = ttk.Progressbar(self.root, mode="indeterminate", length=300)
+        self.progress_bar = ttk.Progressbar(self.root, mode="determinate", length=300, variable=self.input.progress)
         self.__show_progress_bar()
 
     def __hide_progress_bar(self):
@@ -212,7 +222,7 @@ class WhisperUI:
 
         self.__disable_submit_button()
         self.__show_progress_bar()
-        self.progress_bar.start()
+        # self.progress_bar.start()
         self.service.audio_path = self.input.audio_file_path.get()
 
         self.service.transcribe(self.__transcribe_on_finish)

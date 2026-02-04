@@ -39,6 +39,8 @@ class WhisperUIInput:
         self.save_transcript_file_full_path = tk.StringVar(master=root)
         self.audio_file_path = tk.StringVar(master=root)
         self.language = tk.StringVar(master=root)
+
+        self.progress = tk.IntVar(master=root, value=0)
         self.normalize_save_full_path()
         self.__init_event_listeners()
 

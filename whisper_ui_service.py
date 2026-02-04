@@ -9,9 +9,11 @@ import json
 #https://github.com/m-bain/whisperX
 
 class WhisperUIService:
-    def __init__(self):
+    def __init__(self, root, progress_bar_status):
         self.model_id = ""
         self.audio_path = ""
+        self.root = root
+        self.progress_bar_status = progress_bar_status
 
     def load_config(self, config_file_path):
         with open(config_file_path, "r") as f:
@@ -27,6 +29,14 @@ class WhisperUIService:
         t = threading.Thread(target=self.__thread, daemon=True, args=(on_finish,))
         t.start()
 
+    def __progress_callback(self, t):
+        i = torch.argmax(t[:, 1])
+        p = t[i].detach().cpu()
+        self.progress_bar_status["percentage_done"] = (int(p[0]) / int(p[1])) * 100
+        self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=123)
+        # print(int(p[1]))
+        # print(int(p[0]))
+
     def __thread(self, on_finish):
         try:
             device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -34,26 +44,7 @@ class WhisperUIService:
             processor = AutoProcessor.from_pretrained(self.model_id)
 
             model = WhisperForConditionalGeneration.from_pretrained(self.model_id)
-            # model = AutoModelForSpeechSeq2Seq.from_pretrained(
-            #     self.model_id,
-            #     torch_dtype=torch_dtype,
-            #     low_cpu_mem_usage=True,
-            #     use_safetensors=True
-            # )
             model.to(device, torch_dtype)
-
-
-            # pipe = pipeline(
-            #     "automatic-speech-recognition",
-            #     model=model,
-            #     tokenizer=processor.tokenizer,
-            #     feature_extractor=processor.feature_extractor,
-            #     batch_size=16,
-            #     return_timestamps=True,
-            #     dtype=torch_dtype,
-            #     device=device,
-            #     generate_kwargs={"language": "fr"}
-            # )
 
             audio, sample_rate = librosa.load(self.audio_path, sr=16000, mono=True)
             inputs = processor(audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000).input_features
@@ -62,15 +53,17 @@ class WhisperUIService:
                 inputs, 
                 return_timestamps=True,
                 task="transcribe", 
-                language="fr"
-                )
+                language="fr",
+                monitor_progress=self.__progress_callback
+            )
             
             for pidi, pid in enumerate(generated_ids):
-                # timestamps = processor.tokenizer.decode(pid, decode_with_timestamps=True)
-                timestamps = processor.tokenizer.decode(pid, output_offset=True)
                 pdict = processor.tokenizer.decode(pid, output_offsets=True)
                 # print(f"Predicted id [{pidi}]: {pdict['text']}")
                 print(f"Predicted id [{pidi}]: {pdict['offsets']}")
+
+            self.progress_bar_status["percentage_done"] = 100
+            self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=123)
             
             # transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)
             # # result = pipe(audio, chunk_length_s = 10)
