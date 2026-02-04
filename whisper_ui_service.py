@@ -40,7 +40,7 @@ class WhisperUIService:
             #     low_cpu_mem_usage=True,
             #     use_safetensors=True
             # )
-            model.to(device)
+            model.to(device, torch_dtype)
 
 
             # pipe = pipeline(
