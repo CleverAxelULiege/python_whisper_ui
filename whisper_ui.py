@@ -56,6 +56,7 @@ class WhisperUI:
         self.__file_name_and_location()
         self.__build_audio_selection()
         self.__build_language_selection()
+        self.__build_modele_selection()
         self.__submit_button()
         self.__place_progress_bar()
         self.__hide_progress_bar()
@@ -178,6 +179,20 @@ class WhisperUI:
         label_frame_grid.pack(anchor="nw", fill="x")
 
         label = Label(label_frame_grid, text="Quel language est utilisé dans le fichier audio :", font=("Arial", 10, "italic"))
+        label.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
+
+        select_language = ttk.Combobox(label_frame_grid, values=list(WHISPER_LANGUAGES.keys()), textvariable=self.input.language, state="readonly")
+        select_language.set("Français")
+        select_language.grid(row=0, column=1, pady=(10, 0), sticky="ew")
+
+    def __build_modele_selection(self):
+        label_frame = LabelFrame(self.root, text=" • Sélection du modèle • ", font=("Arial", 12, "bold"))        
+        label_frame.pack(anchor="nw", fill="x", padx=5, pady=5)
+
+        label_frame_grid = Frame(label_frame)
+        label_frame_grid.pack(anchor="nw", fill="x")
+
+        label = Label(label_frame_grid, text="Quel modèle utiliser :", font=("Arial", 10, "italic"))
         label.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
 
         select_language = ttk.Combobox(label_frame_grid, values=list(WHISPER_LANGUAGES.keys()), textvariable=self.input.language, state="readonly")
