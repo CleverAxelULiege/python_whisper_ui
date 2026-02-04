@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, WhisperForConditionalGeneration
 import librosa
 import threading
 import json
@@ -28,37 +28,51 @@ class WhisperUIService:
         try:
             device = "cuda:0" if torch.cuda.is_available() else "cpu"
             torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-            model_id = r"C:\Users\clever\Documents\python\tkinter_whisper\model\small"
-            audio_file = r"C:\Users\clever\Documents\python\tkinter_whisper\audio.mp3"
-
-            model = AutoModelForSpeechSeq2Seq.from_pretrained(
-                self.model_id,
-                torch_dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-                use_safetensors=True
-            )
-            model.to(device)
-
             processor = AutoProcessor.from_pretrained(self.model_id)
 
-            pipe = pipeline(
-                "automatic-speech-recognition",
-                model=model,
-                tokenizer=processor.tokenizer,
-                feature_extractor=processor.feature_extractor,
-                batch_size=16,
-                return_timestamps=True,
-                dtype=torch_dtype,
-                device=device,
-                generate_kwargs={"language": "fr"}
-            )
+            model = WhisperForConditionalGeneration.from_pretrained(self.model_id)
+            # model = AutoModelForSpeechSeq2Seq.from_pretrained(
+            #     self.model_id,
+            #     torch_dtype=torch_dtype,
+            #     low_cpu_mem_usage=True,
+            #     use_safetensors=True
+            # )
+            model.to(device)
+
+
+            # pipe = pipeline(
+            #     "automatic-speech-recognition",
+            #     model=model,
+            #     tokenizer=processor.tokenizer,
+            #     feature_extractor=processor.feature_extractor,
+            #     batch_size=16,
+            #     return_timestamps=True,
+            #     dtype=torch_dtype,
+            #     device=device,
+            #     generate_kwargs={"language": "fr"}
+            # )
 
             audio, sample_rate = librosa.load(self.audio_path, sr=16000, mono=True)
+            inputs = processor(audio, return_tensors="pt", truncation=False, padding="longest", return_attention_mask=True, sampling_rate=16_000).input_features
 
-            result = pipe(audio, chunk_length_s = 10)
+            generated_ids = model.generate(
+                inputs, 
+                return_timestamps=True,
+                task="transcribe", 
+                language="fr"
+                )
+            
+            for pidi, pid in enumerate(generated_ids):
+                # timestamps = processor.tokenizer.decode(pid, decode_with_timestamps=True)
+                timestamps = processor.tokenizer.decode(pid, output_offset=True)
+                pdict = processor.tokenizer.decode(pid, output_offsets=True)
+                print(f"Predicted id [{pidi}]: {pdict['text']}")
+                print(f"Predicted id [{pidi}]: {pdict['offsets']}")
+            
+            # transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)
+            # # result = pipe(audio, chunk_length_s = 10)
 
-            on_finish(result)
+            # on_finish(transcription)
 
         except FileNotFoundError as e:
             print("file not found")
