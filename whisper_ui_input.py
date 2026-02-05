@@ -90,3 +90,12 @@ class WhisperUIInput:
             (model["model_name"] for model in valid_models if model.get("default") is True),
             None
         )
+
+    def get_model_path(self):
+        selected_name = self.model.get()
+
+        for model in self.models:
+            if model["model_name"] == selected_name:
+                return model["model_path"]
+
+        return None

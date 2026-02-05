@@ -64,8 +64,11 @@ class WhisperUI:
         self.__enable_submit_button()
 
     def __update_progress_bar(self, evt):
-        print(self.progress_bar_status["percentage_done"])
-        self.input.progress.set(self.progress_bar_status["percentage_done"])
+        if(evt.state == 0):
+            print(str(self.progress_bar_status["percentage_done"]) + "%")
+            self.input.progress.set(self.progress_bar_status["percentage_done"])
+        elif(evt.state == 1):
+            messagebox.showerror(title="Une erreur est survenue", message="Une erreur est survenue. Merci de regarder le terminal pour voir ce qu'il s'est paassé.")
         # self.progress_bar.set(self.progress_bar_status["percentage_done"])
     
     def __create_title(self):
@@ -267,6 +270,12 @@ class WhisperUI:
         self.__show_progress_bar()
         self.service.audio_path = self.input.audio_file_path.get()
         lng = WHISPER_LANGUAGES[self.input.language.get()]
+        model_choosen = self.input.get_model_path()
+        if(model_choosen == None):
+            messagebox.showerror(title="Aucun modèle chargé", message="Aucun modèle chargé. La transcription n'est pas possible.")
+            return
+        
+        self.service.model_id = model_choosen
         self.service.transcribe(self.__transcribe_on_finish, lng)
 
     def __transcribe_on_finish(self, result):
