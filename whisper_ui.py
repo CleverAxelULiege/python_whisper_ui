@@ -24,6 +24,7 @@ def ensure_json_file():
 
 ensure_json_file()
 print("Chargement des ressources...")
+import time
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, messagebox
@@ -38,6 +39,8 @@ print("Input & service IA local chargé")
 # pyinstaller --name WhisperUITestConsole --onedir --windowed  whisper_ui.py
 class WhisperUI:
     def __init__(self):
+        self.start_time = 0
+        self.end_time = 0
         self.progress_bar_status = {
             "percentage_done" : 10
         }
@@ -286,9 +289,12 @@ class WhisperUI:
         self.__show_progress_bar()
         
         self.service.model_id = model_choosen
+        self.start_time = time.time()
         self.service.transcribe(self.__transcribe_on_finish, lng)
 
     def __transcribe_on_finish(self, result):
+        self.end_time = time.time()
+        
         self.__enable_checkbox_timestamp()
         self.__enable_submit_button()
         self.service.write_transcription(result=result, file_path=self.input.save_transcript_file_full_path.get(), should_add_timestamp=self.input.should_add_timestamp.get())
@@ -298,6 +304,8 @@ class WhisperUI:
             filedialog.askopenfile(initialdir=self.input.save_directory_path.get(), title="Dossier")
 
         print(result["text"])
+        elapsed = self.end_time - self.start_time
+        print(f"A pris : {elapsed:.2f} secondes")
         
     def __init_root(self):
         self.root.title("Whisper UI")
