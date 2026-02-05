@@ -45,6 +45,7 @@ class WhisperUI:
         self.input = WhisperUIInput(self.root)
         self.service = WhisperUIService(root=self.root, progress_bar_status=self.progress_bar_status)
         self.service.load_config(config_path)
+        self.input.load_config(config_path)
 
         self.progress_bar = ttk.Progressbar(master=self.root, mode="determinate")
         self.submit_button = Button()
@@ -195,9 +196,14 @@ class WhisperUI:
         label = Label(label_frame_grid, text="Quel modèle utiliser :", font=("Arial", 10, "italic"))
         label.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
 
-        select_language = ttk.Combobox(label_frame_grid, values=list(WHISPER_LANGUAGES.keys()), textvariable=self.input.language, state="readonly")
-        select_language.set("Français")
-        select_language.grid(row=0, column=1, pady=(10, 0), sticky="ew")
+        select_model = ttk.Combobox(label_frame_grid, values=list(self.input.models_names), textvariable=self.input.model, state="readonly")
+        if self.input.default_model:
+            select_model.set(self.input.default_model)
+        elif self.input.models_names:
+            select_model.set(self.input.models_names[0])
+        else:
+            messagebox.showerror(title="Aucun modèle", message="Aucun modèle donné dans le fichier de configuration.")
+        select_model.grid(row=0, column=1, pady=(10, 0), sticky="ew")
 
 
     def __select_audio_file(self):

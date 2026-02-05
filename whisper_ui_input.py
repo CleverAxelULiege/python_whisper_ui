@@ -2,6 +2,7 @@ import time
 import tkinter as tk
 from pathlib import Path
 import re
+import json
 WHISPER_LANGUAGES = {
     "Anglais": "en",
     "Chinois": "zh",
@@ -43,6 +44,11 @@ class WhisperUIInput:
         self.normalize_save_full_path()
         self.__init_event_listeners()
 
+        self.model = tk.StringVar(master=root, value="")
+        self.models_names = []
+        self.models = {}
+        self.default_model = None
+
     def normalize_save_full_path(self, *args):
         self.save_filename.set(self.__sanitize_filename())
 
@@ -67,3 +73,20 @@ class WhisperUIInput:
         
         #substr
         return filename[:255]
+    
+    def load_config(self, config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            models = json.load(f)
+
+        valid_models = [
+            model for model in models
+            if model.get("model_name") and model.get("model_path")
+        ]
+
+        self.models = valid_models
+        self.models_names = [model["model_name"] for model in valid_models]
+
+        self.default_model = next(
+            (model["model_name"] for model in valid_models if model.get("default") is True),
+            None
+        )
