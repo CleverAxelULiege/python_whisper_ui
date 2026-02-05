@@ -11,8 +11,8 @@ def ensure_json_file():
     # Check if file exists
     if (not config_path.exists()):
         template = [
-            {"model_path": "", "default": True},
-            {"model_path": "", "default": False}
+            {"model_name": "", "model_path": "", "default": True},
+            {"model_name": "", "model_path": "", "default": False}
         ]
         with open(config_path, "w") as f:
             json.dump(template, f, indent=4)
@@ -215,13 +215,31 @@ class WhisperUI:
     def __submit_button(self):
         button_frame = Frame(self.root)
         button_frame.pack(anchor="nw", fill="x", padx=5, pady=5)
-        self.submit_button = ttk.Button(button_frame, text="Transcrire le fichier audio", command=self.__on_submit_button)
-        self.submit_button.pack(side="left", padx=5, pady=5, expand=True)
+
+        self.timestamp_var = BooleanVar(value=False)
+
+        self.timestamp_checkbox = ttk.Checkbutton(
+            button_frame,
+            text="Horodater la transcription ?",
+            variable=self.timestamp_var
+        )
+        self.timestamp_checkbox.pack(side="left", padx=5)
+
+        self.submit_button = ttk.Button(
+            button_frame,
+            text="Transcrire le fichier audio",
+            command=self.__on_submit_button
+        )
+        self.submit_button.pack(side="right", padx=5, pady=5, expand=False)
 
     def __on_submit_button(self):
+        if(self.input.save_filename.get() == ""):
+            messagebox.showerror(title="Nom manquant", message="Vous n'avez pas indiqué de nom de fichier pour la transcription.")
+            return
+        
         audio_path = Path(self.input.audio_file_path.get())
         save_directory_path = Path(self.input.save_directory_path.get())
-
+        save_transcription_full_path = Path(self.input.save_transcript_file_full_path.get())
 
         if(audio_path == Path(".") or not audio_path.exists()):
             messagebox.showerror(title="Fichier audio introuvable", message="Le fichier audio est introuvable, existe-t-il ?")
@@ -234,11 +252,16 @@ class WhisperUI:
         if(save_directory_path == Path(".") or not save_directory_path.exists()):
             messagebox.showerror(title="Le dossier n'existe pas", message="Le dossier où doit être enregistré la transcription n'existe pas.")
             return
+        
+        if(save_transcription_full_path.exists() and save_transcription_full_path.is_file()):
+            messagebox.showerror(title="Le fichier est existant", message="Un fichier du même nom existe déjà.")
+            return
 
         self.__disable_submit_button()
         self.__show_progress_bar()
         self.service.audio_path = self.input.audio_file_path.get()
-        self.service.transcribe(self.__transcribe_on_finish)
+        lng = WHISPER_LANGUAGES[self.input.language.get()]
+        self.service.transcribe(self.__transcribe_on_finish, lng)
 
     def __transcribe_on_finish(self, result):
         self.input.progress.set(100)

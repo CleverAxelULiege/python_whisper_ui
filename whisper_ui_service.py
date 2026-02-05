@@ -25,8 +25,8 @@ class WhisperUIService:
                 return
             
 
-    def transcribe(self, on_finish):
-        t = threading.Thread(target=self.__thread, daemon=True, args=(on_finish,))
+    def transcribe(self, on_finish, language):
+        t = threading.Thread(target=self.__thread, daemon=True, args=(on_finish,language,))
         t.start()
 
     def __progress_callback(self, t):
@@ -37,7 +37,7 @@ class WhisperUIService:
         # print(int(p[1]))
         # print(int(p[0]))
 
-    def __thread(self, on_finish):
+    def __thread(self, on_finish, language):
         try:
             device = "cuda:0" if torch.cuda.is_available() else "cpu"
             torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -54,7 +54,7 @@ class WhisperUIService:
                 attention_mask=inputs.attention_mask,
                 return_timestamps=True,
                 task="transcribe", 
-                language="en",
+                language=language,
                 monitor_progress=self.__progress_callback
             )
 

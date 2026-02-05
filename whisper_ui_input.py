@@ -3,7 +3,6 @@ import tkinter as tk
 from pathlib import Path
 import re
 WHISPER_LANGUAGES = {
-    "Automatique": "unkown",
     "Anglais": "en",
     "Chinois": "zh",
     "Allemand": "de",
