@@ -3,6 +3,7 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, Whi
 import librosa
 import threading
 import json
+from datetime import timedelta
 #https://github.com/huggingface/transformers/issues/30815#issuecomment-2254296338
 #https://github.com/huggingface/transformers/issues/20057
 #https://huggingface.co/docs/transformers/model_doc/whisper#transformers.WhisperForConditionalGeneration.generate
@@ -69,3 +70,25 @@ class WhisperUIService:
             print(e)
             self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=1)
             
+    def __format_time(self, seconds: float) -> str:
+        td = timedelta(seconds=seconds)
+        total_seconds = int(td.total_seconds())
+        minutes, seconds = divmod(total_seconds, 60)
+        return f"{minutes:02d}:{seconds:02d}"
+    
+
+
+    def write_transcription(self, result: dict, file_path: str, should_add_timestamp: bool):
+        with open(file_path, "w", encoding="utf-8") as file:
+            for offset in result.get("offsets", []):
+                text = offset.get("text", "").strip()
+
+                if should_add_timestamp:
+                    start, end = offset.get("timestamp", (0, 0))
+                    start_str = self.__format_time(start)
+                    end_str = self.__format_time(end)
+                    line = f"[De : {start_str}; à : {end_str}] {text}\n"
+                else:
+                    line = f"{text}\n"
+
+                file.write(line)

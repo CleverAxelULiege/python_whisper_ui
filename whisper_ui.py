@@ -49,6 +49,7 @@ class WhisperUI:
 
         self.progress_bar = ttk.Progressbar(master=self.root, mode="determinate")
         self.submit_button = Button()
+        self.timestamp_checkbox = ttk.Checkbutton()
 
         self.root.bind("<<update_progress_bar_event>>", self.__update_progress_bar)
 
@@ -93,6 +94,12 @@ class WhisperUI:
 
     def __enable_submit_button(self):
         self.submit_button["state"] = "enable"
+
+    def __disable_checkbox_timestamp(self):
+        self.timestamp_checkbox["state"] = "disabled"
+
+    def __enable_checkbox_timestamp(self):
+        self.timestamp_checkbox["state"] = "enable"
 
     def __file_name_and_location(self):
         label_frame = LabelFrame(self.root, text=" • Nom et emplacement • ", font=("Arial", 12, "bold"))
@@ -225,12 +232,12 @@ class WhisperUI:
         button_frame = Frame(self.root)
         button_frame.pack(anchor="nw", fill="x", padx=5, pady=5)
 
-        self.timestamp_var = BooleanVar(value=False)
+        
 
         self.timestamp_checkbox = ttk.Checkbutton(
             button_frame,
             text="Horodater la transcription ?",
-            variable=self.timestamp_var
+            variable=self.input.should_add_timestamp
         )
         self.timestamp_checkbox.pack(side="left", padx=5)
 
@@ -266,8 +273,7 @@ class WhisperUI:
             messagebox.showerror(title="Le fichier est existant", message="Un fichier du même nom existe déjà.")
             return
 
-        self.__disable_submit_button()
-        self.__show_progress_bar()
+
         self.service.audio_path = self.input.audio_file_path.get()
         lng = WHISPER_LANGUAGES[self.input.language.get()]
         model_choosen = self.input.get_model_path()
@@ -275,11 +281,22 @@ class WhisperUI:
             messagebox.showerror(title="Aucun modèle chargé", message="Aucun modèle chargé. La transcription n'est pas possible.")
             return
         
+        self.__disable_submit_button()
+        self.__disable_checkbox_timestamp()
+        self.__show_progress_bar()
+        
         self.service.model_id = model_choosen
         self.service.transcribe(self.__transcribe_on_finish, lng)
 
     def __transcribe_on_finish(self, result):
+        self.__enable_checkbox_timestamp()
+        self.__enable_submit_button()
+        self.service.write_transcription(result=result, file_path=self.input.save_transcript_file_full_path.get(), should_add_timestamp=self.input.should_add_timestamp.get())
         self.input.progress.set(100)
+        self.should_open_dir = messagebox.askyesno(title="Transcription terminée !", message="Transcription terminée.\nVoulez ouvrir le dossier où se trouver votre fichier ?")
+        if(self.should_open_dir):
+            filedialog.askopenfile(initialdir=self.input.save_directory_path.get(), title="Dossier")
+
         print(result["text"])
         
     def __init_root(self):
