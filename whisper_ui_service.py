@@ -3,6 +3,7 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, Whi
 import librosa
 import threading
 import json
+import logging
 from datetime import timedelta
 #https://github.com/huggingface/transformers/issues/30815#issuecomment-2254296338
 #https://github.com/huggingface/transformers/issues/20057
@@ -15,6 +16,12 @@ class WhisperUIService:
         self.audio_path = ""
         self.root = root
         self.progress_bar_status = progress_bar_status
+        logging.basicConfig(
+            filename="app.log",
+            level=logging.ERROR,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+        )
+
 
     def load_config(self, config_file_path):
         with open(config_file_path, "r") as f:
@@ -66,8 +73,8 @@ class WhisperUIService:
             
 
         except Exception as e:
-            print("unhandeld exception")
             print(e)
+            logging.exception("Unhandled exception occurred")
             self.root.event_generate("<<update_progress_bar_event>>", when="tail", state=1)
             
     def __format_time(self, seconds: float) -> str:
